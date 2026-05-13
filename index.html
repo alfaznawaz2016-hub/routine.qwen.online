@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPI Exam Routine Finder (Offline)</title>
+    <!-- Removed Google Fonts Link for Offline Compatibility -->
+    <style>
+        :root {
+            --primary-color: #1e3a8a; /* Deep Blue */
+            --secondary-color: #3b82f6; /* Lighter Blue */
+            --bg-color: #f0f4f8;
+            --text-color: #1f2937;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            /* Updated Font Stack for Offline Bengali Support */
+            font-family: 'Noto Sans Bengali', 'Kalpurush', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* Controls Container */
+        .controls {
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        select, input {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Results Container */
+        .results-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+
+        .btn-print {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s;
+        }
+
+        .btn-print:hover {
+            background: #1e40af;
+        }
+
+        /* Table Styles */
+        .table-wrapper {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--glass-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* Force scroll on small screens if not using cards */
+        }
+
+        thead {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .date-cell {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .subject-name {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .tech-tag {
+            display: inline-block;
+            background: #dbeafe;
+            color: var(--primary-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+            font-size: 1.2rem;
+        }
+
+        /* Mobile Card View */
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                margin-bottom: 15px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                border: 1px solid #e5e7eb;
+                overflow: hidden;
+            }
+
+            td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+                border-bottom: 1px solid #f3f4f6;
+            }
+
+            td:last-child {
+                border-bottom: none;
+            }
+
+            td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 15px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: 600;
+                color: var(--primary-color);
+            }
+
+            .date-cell {
+                background: #eff6ff;
+                padding: 10px 15px;
+                text-align: center;
+                border-bottom: 2px solid #e5e7eb;
+            }
+            
+            .date-cell::before {
+                display: none;
+            }
+
+            .subject-name {
+                display: block;
+                margin-bottom: 10px;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .controls, .action-bar, header p {
+                display: none;
+            }
+            header {
+                background: white;
+                color: black;
+                box-shadow: none;
+                border-bottom: 2px solid black;
+                border-radius: 0;
+                margin-bottom: 10px;
+            }
+            .table-wrapper {
+                box-shadow: none;
+                border: none;
+            }
+            table {
+                min-width: 100%;
+                border: 1px solid black;
+            }
+            th, td {
+                border: 1px solid black;
+                color: black;
+            }
+            thead {
+                background: #f3f4f6;
+                color: black;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>রাজশাহী পলিটেকনিক ইনস্টিটিউট</h1>
+        <p>মিড-টার্ম পরীক্ষার রুটিন খুঁজুন (২০২৬)</p>
+    </header>
+
+    <div class="controls">
+        <div class="input-group">
+            <label for="semesterSelect">সেমিস্টার নির্বাচন করুন</label>
+            <select id="semesterSelect">
+                <option value="">-- সেমিস্টার নির্বাচন --</option>
+                <option value="2">য় পর্ব (2nd Semester)</option>
+                <option value="3">৩য় পর্ব (3rd Semester)</option>
+                <option value="4">৪র্থ পর্ব (4th Semester)</option>
+                <option value="7">৭ম পর্ব (7th Semester)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="deptSelect">বিভাগ নির্বাচন করুন</label>
+            <select id="deptSelect" disabled>
+                <option value="">-- প্রথমে সেমিস্টার নির্বাচন করুন --</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="searchInput">বিষয় খুঁজুন</label>
+            <input type="text" id="searchInput" placeholder="বিষয়ের নাম লিখুন..." disabled>
+        </div>
+    </div>
+
+    <div class="results-container">
+        <div class="action-bar">
+            <button class="btn-print" onclick="window.print()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                প্রিন্ট করুন
+            </button>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="routineTable">
+                <thead>
+                    <tr>
+                        <th>তারিখ ও বার</th>
+                        <th>সময়</th>
+                        <th>কোর্স কোড</th>
+                        <th>বিষয়ের নাম</th>
+                        <th>প্রযোজ্য বিভাগসমূহ</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be injected here -->
+                </tbody>
+            </table>
+            <div id="noResults" class="no-results" style="display: none;">
+                কোনো তথ্য পাওয়া যায়নি।
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STRUCTURE ---
+        // Based on the images provided
+        const routineData = {
+            "2": [
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "10:30", code: "25111", name: "গণিত-২", techs: ["সকল"] },
+                { date: "07/06/2026", day: "রবিবার", time: "10:30", code: "25112", name: "ফিজিক্স-১", techs: ["সিভিল"] },
+                { date: "07/06/2026", day: "রবিবার", time: "10:30", code: "25122", name: "ফিজিক্স-২", techs: ["ইলেকট্রিক্যাল", "মেকানিক্যাল", "ইলেকট্রোমেডিক্যাল", "মেকাট্রনিক্স"] },
+                { date: "07/06/2026", day: "রবিবার", time: "10:30", code: "27121", name: "পাওয়ার ইকুইপমেন্ট ম্যানেজমেন্ট এন্ড ড্রাফট", techs: ["পাওয়ার"] },
+                { date: "07/06/2026", day: "রবিবার", time: "10:30", code: "26821", name: "ইলেকট্রনিক ডিভাইসেস এন্ড সার্কিটস", techs: ["ইলেকট্রনিক্স"] },
+                { date: "07/06/2026", day: "রবিবার", time: "10:30", code: "28521", name: "পাইথন প্রোগ্রামিং", techs: ["কম্পিউটার"] },
+                { date: "08/06/2026", day: "সোমবার", time: "10:30", code: "25721", name: "বাংলা-২", techs: ["সকল"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "10:30", code: "25722", name: "ইংলিশ-২", techs: ["সকল"] },
+                { date: "10/06/2026", day: "বুধবার", time: "10:30", code: "26811", name: "বেসিক ইলেকট্রনিক্স", techs: ["সিভিল", "ইলেকট্রিক্যাল", "কম্পিউটার", "মেকাট্রনিক্স", "ইলেকট্রোমেডিক্যাল"] },
+                { date: "10/06/2026", day: "বুধবার", time: "10:30", code: "26711", name: "বেসিক ইলেকট্রিসিটি", techs: ["মেকানিক্যাল", "পাওয়ার"] },
+                { date: "10/06/2026", day: "বুধবার", time: "10:30", code: "25811", name: "সোশ্যাল সায়েন্স", techs: ["ইলেকট্রনিক্স"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "10:30", code: "25113", name: "কেমিস্ট্রি", techs: ["মেকানিক্যাল", "পাওয়ার", "ইলেকট্রনিক্স", "কম্পিউটার"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "10:30", code: "26411", name: "সিভিল ইঞ্জিনিয়ারিং ড্রয়িং", techs: ["সিভিল"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "10:30", code: "26722", name: "ইলেকট্রিক্যাল ইঞ্জিনিয়ারিং ড্রয়িং", techs: ["ইলেকট্রিক্যাল"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "10:30", code: "28621", name: "বেসিক বায়োমেডিক্যাল ইঞ্জিনিয়ারিং", techs: ["ইলেকট্রোমেডিক্যাল"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "10:30", code: "27012", name: "মেশিনশপ প্র্যাকটিস-১", techs: ["মেকাট্রনিক্স"] },
+                { date: "14/06/2026", day: "রবিবার", time: "10:30", code: "27011", name: "মেকানিক্যাল ইঞ্জিনিয়ারিং ড্রয়িং", techs: ["মেকানিক্যাল", "মেকাট্রনিক্স"] },
+                { date: "14/06/2026", day: "রবিবার", time: "10:30", code: "26721", name: "ইলেকট্রিক্যাল সার্কিটস-১", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রনিক্স", "ইলেকট্রোমেডিক্যাল"] }
+            ],
+            "3": [
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "09:00", code: "25101", name: "গণিত-৩", techs: ["সকল"] },
+                { date: "07/06/2026", day: "রবিবার", time: "09:00", code: "26701", name: "ইলেকট্রিক্যাল সার্কিটস-২", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রনিক্স", "ইলেকট্রোমেডিক্যাল"] },
+                { date: "07/06/2026", day: "রবিবার", time: "09:00", code: "27101", name: "আর.এ.ডি সাইকেলস এন্ড কম্পোনেন্টস", techs: ["মেকানিক্যাল", "পাওয়ার"] },
+                { date: "07/06/2026", day: "রবিবার", time: "09:00", code: "28501", name: "অ্যাপ্লিকেশন ডেভেলপমেন্ট ইউজিং পাইথন", techs: ["কম্পিউটার"] },
+                { date: "07/06/2026", day: "রবিবার", time: "09:00", code: "26801", name: "ইলেকট্রনিক ডিভাইসেস এন্ড সার্কিটস", techs: ["ইলেকট্রনিক্স"] },
+                { date: "07/06/2026", day: "রবিবার", time: "09:00", code: "26401", name: "স্ট্রাকচারাল মেকানিক্স", techs: ["সিভিল"] },
+                { date: "08/06/2026", day: "সোমবার", time: "09:00", code: "25801", name: "বিজনেস কমিউনিকেশন", techs: ["সিভিল", "মেকানিক্যাল", "মেকাট্রনিক্স"] },
+                { date: "08/06/2026", day: "সোমবার", time: "09:00", code: "26702", name: "ইলেকট্রিক্যাল অ্যাপ্লায়েন্স", techs: ["ইলেকট্রিক্যাল"] },
+                { date: "08/06/2026", day: "সোমবার", time: "09:00", code: "28602", name: "অপারেটিং রুম ইকুইপমেন্ট", techs: ["ইলেকট্রোমেডিক্যাল"] },
+                { date: "08/06/2026", day: "সোমবার", time: "09:00", code: "26802", name: "বেসিক ইলেকট্রনিক্স", techs: ["ইলেকট্রনিক্স"] },
+                { date: "08/06/2026", day: "সোমবার", time: "09:00", code: "26801", name: "ডিজিটাল ইলেকট্রনিক্স-১", techs: ["কম্পিউটার"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "09:00", code: "25122", name: "ফিজিক্স-২", techs: ["সিভিল", "ইলেকট্রিক্যাল", "কম্পিউটার", "পাওয়ার"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "09:00", code: "25113", name: "কেমিস্ট্রি", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রোমেডিক্যাল", "মেকানিক্যাল"] },
+                { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "25811", name: "সোশ্যাল সায়েন্স", techs: ["মেকানিক্যাল", "কম্পিউটার", "ইলেকট্রিক্যাল", "ইলেকট্রোমেডিক্যাল", "মেকাট্রনিক্স"] },
+                { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "26402", name: "সার্ভেয়িং-১", techs: ["সিভিল"] },
+                { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "26703", name: "ইন্ডাস্ট্রিয়াল ইলেকট্রনিক্স", techs: ["ইলেকট্রিক্যাল"] },
+                { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "26803", name: "পাওয়ার ইলেকট্রনিক্স", techs: ["পাওয়ার"] },
+                { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "27012", name: "মেশিন শপ প্র্যাকটিস-১", techs: ["মেকানিক্যাল"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "09:00", code: "26403", name: "কনস্ট্রাকশন প্রসেস-১", techs: ["সিভিল"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "09:00", code: "28503", name: "আইটি সাপোর্ট সার্ভিসেস", techs: ["কম্পিউটার"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "09:00", code: "28601", name: "মেডিক্যাল ট্রান্সডিউসার এন্ড সেন্সরস", techs: ["ইলেকট্রোমেডিক্যাল"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "09:00", code: "27001", name: "মেকানিক্যাল ইঞ্জিনিয়ারিং ম্যাটেরিয়ালস", techs: ["মেকানিক্যাল", "মেকাট্রনিক্স"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "09:00", code: "27101", name: "ইঞ্জিনিয়ারিং থার্মোডাইনামিক্স", techs: ["পাওয়ার"] },
+                { date: "14/06/2026", day: "রবিবার", time: "09:00", code: "28202", name: "বেসিক মেকানিক্স", techs: ["মেকানিক্যাল"] }
+            ],
+            "4": [
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "26424", name: "থিওরি অফ স্ট্রাকচার", techs: ["সিভিল"] },
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "26752", name: "ইলেকট্রিক্যাল এন্ড ইলেকট্রনিক মেজারমেন্ট-১", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রনিক্স"] },
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "27051", name: "ফ্লুইড মেকানিক্স এন্ড নিউম্যাটিক্স", techs: ["মেকানিক্যাল", "পাওয়ার", "মেকাট্রনিক্স"] },
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "28553", name: "কম্পিউটার আর্কিটেকচার এন্ড মাইক্রোপ্রসেসর", techs: ["কম্পিউটার"] },
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "28683", name: "ইলেকট্রিক্যাল এন্ড ইলেকট্রনিক মেজারমেন্ট-২", techs: ["ইলেকট্রোমেডিক্যাল"] },
+                { date: "07/06/2026", day: "রবিবার", time: "14:00", code: "26453", name: "সার্ভেয়িং-৩", techs: ["সিভিল"] },
+                { date: "07/06/2026", day: "রবিবার", time: "14:00", code: "28571", name: "প্রোগ্রামিং ইন সি", techs: ["কম্পিউটার"] },
+                { date: "07/06/2026", day: "রবিবার", time: "14:00", code: "27152", name: "পাওয়ার প্ল্যান্ট ইনস্ট্রুমেন্টেশন", techs: ["পাওয়ার", "মেকাট্রনিক্স"] },
+                { date: "07/06/2026", day: "রবিবার", time: "14:00", code: "28544", name: "ডিজিটাল কমিউনিকেশন", techs: ["কম্পিউটার"] },
+                { date: "07/06/2026", day: "রবিবার", time: "14:00", code: "26853", name: "মাইক্রোপ্রসেসর এন্ড মাইক্রোকন্ট্রোলার", techs: ["ইলেকট্রিক্যাল"] },
+                { date: "08/06/2026", day: "সোমবার", time: "14:00", code: "25852", name: "ইন্ডাস্ট্রিয়াল ম্যানেজমেন্ট", techs: ["সিভিল", "ইলেকট্রিক্যাল", "ইলেকট্রনিক্স", "ইলেকট্রোমেডিক্যাল", "মেকানিক্যাল", "পাওয়ার", "মেকাট্রনিক্স"] },
+                { date: "08/06/2026", day: "সোমবার", time: "14:00", code: "25861", name: "অ্যাকাউন্টিং", techs: ["কম্পিউটার"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "14:00", code: "25851", name: "প্রিন্সিপল অফ মার্কেটিং", techs: ["সিভিল", "ইলেকট্রিক্যাল", "ইলেকট্রনিক্স", "ইলেকট্রোমেডিক্যাল", "পাওয়ার", "মেকাট্রনিক্স"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "14:00", code: "26761", name: "বিজনেস কমিউনিকেশন", techs: ["পাওয়ার"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "14:00", code: "27052", name: "মেকানিক্যাল এস্টিমেটিং এন্ড কস্টিং", techs: ["মেকানিক্যাল", "মেকাট্রনিক্স"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "14:00", code: "26454", name: "ওয়ার্কশপ প্র্যাকটিস ইঞ্জিনিয়ারিং ড্রয়িং", techs: ["সিভিল"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "14:00", code: "28551", name: "আর্ক ডেভেলপমেন্ট প্রেজেন্টেশন ড্রয়িং", techs: ["কম্পিউটার"] },
+                { date: "10/06/2026", day: "বুধবার", time: "14:00", code: "26452", name: "সিভিল সার্ভে-২", techs: ["সিভিল"] },
+                { date: "10/06/2026", day: "বুধবার", time: "14:00", code: "26762", name: "কনক্রিট এন্ড স্টিল স্ট্রাকচার", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রনিক্স"] },
+                { date: "10/06/2026", day: "বুধবার", time: "14:00", code: "27053", name: "ম্যানুফ্যাকচারিং প্রসেস", techs: ["মেকানিক্যাল", "মেকাট্রনিক্স"] },
+                { date: "10/06/2026", day: "বুধবার", time: "14:00", code: "28552", name: "ডিজিটাল লজিক", techs: ["কম্পিউটার"] },
+                { date: "10/06/2026", day: "বুধবার", time: "14:00", code: "27153", name: "পাওয়ার প্ল্যান্ট", techs: ["পাওয়ার"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "26461", name: "হাইড্রোলজি", techs: ["সিভিল"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "28554", name: "থিওরি অফ ডিজাইন এন্ড আর্ক ডেভেলপমেন্ট-২", techs: ["কম্পিউটার"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "26763", name: "সুইচিং এন্ড টেলিকমিউনিকেশন", techs: ["ইলেকট্রিক্যাল"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "26854", name: "ইলেকট্রনিক কমিউনিকেশন", techs: ["ইলেকট্রনিক্স"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "27054", name: "মেট্রোলজি এন্ড ইনস্পেকশন", techs: ["মেকানিক্যাল", "পাওয়ার"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "14:00", code: "28555", name: "পিএলসি", techs: ["কম্পিউটার"] },
+                { date: "14/06/2026", day: "রবিবার", time: "14:00", code: "27058", name: "পেইন্টিং এন্ড ফিনিশিং", techs: ["সিভিল"] },
+                { date: "14/06/2026", day: "রবিবার", time: "14:00", code: "27151", name: "অটোমেটিক ইলেকট্রনিক সিস্টেম এন্ড অটোমেশন", techs: ["পাওয়ার"] },
+                { date: "14/06/2026", day: "রবিবার", time: "14:00", code: "28674", name: "ইলেকট্রোমেডিক্যাল ইনস্ট্রুমেন্টেশন", techs: ["ইলেকট্রোমেডিক্যাল"] },
+                { date: "14/06/2026", day: "রবিবার", time: "14:00", code: "26761", name: "এসি মেশিন-১", techs: ["ইলেকট্রিক্যাল"] },
+                { date: "14/06/2026", day: "রবিবার", time: "14:00", code: "26854", name: "ডিজিটাল ইলেকট্রনিক্স", techs: ["কম্পিউটার"] },
+                { date: "14/06/2026", day: "রবিবার", time: "14:00", code: "26851", name: "মেশিন শপ প্র্যাকটিস", techs: ["মেকানিক্যাল"] },
+                { date: "14/06/2026", day: "রবিবার", time: "14:00", code: "26451", name: "সিভিল ইঞ্জিনিয়ারিং ড্রয়িং", techs: ["সিভিল"] },
+                { date: "15/06/2026", day: "সোমবার", time: "14:00", code: "26851", name: "হাইড্রোলিক্স এন্ড নিউম্যাটিক্স", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রোমেডিক্যাল"] },
+                { date: "15/06/2026", day: "সোমবার", time: "14:00", code: "27152", name: "ইলেকট্রোমেডিক্যাল এন্ড ইলেকট্রনিক ডিভাইসেস", techs: ["মেকাট্রনিক্স"] }
+            ],
+            "7": [
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "26474", name: "ডিজাইন অফ মেশিন এলিমেন্টস-২", techs: ["সিভিল"] },
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "26771", name: "এসি মেশিন-২", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রনিক্স"] },
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "27071", name: "ডিজাইন অফ মেশিন এলিমেন্টস", techs: ["মেকানিক্যাল", "পাওয়ার", "মেকাট্রনিক্স"] },
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "28574", name: "মাল্টিমিডিয়া এন্ড অ্যানিমেশন", techs: ["কম্পিউটার"] },
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "28671", name: "ইলেকট্রোমেডিক্যাল ইকুইপমেন্ট", techs: ["ইলেকট্রোমেডিক্যাল"] },
+                { date: "07/06/2026", day: "রবিবার", time: "12:00", code: "26871", name: "কনস্ট্রাকশন ম্যানেজমেন্ট এন্ড এস্টিমেট", techs: ["সিভিল"] },
+                { date: "07/06/2026", day: "রবিবার", time: "12:00", code: "26772", name: "টিআইডি-২", techs: ["ইলেকট্রিক্যাল"] },
+                { date: "07/06/2026", day: "রবিবার", time: "12:00", code: "27074", name: "প্রোডাকশন প্ল্যানিং এন্ড কন্ট্রোল", techs: ["মেকানিক্যাল", "মেকাট্রনিক্স"] },
+                { date: "07/06/2026", day: "রবিবার", time: "12:00", code: "26871", name: "মাইক্রোকন্ট্রোলার ইন্টারফেসিং এন্ড ডিভাইসেস", techs: ["ইলেকট্রিক্যাল"] },
+                { date: "07/06/2026", day: "রবিবার", time: "12:00", code: "28572", name: "নেটওয়ার্ক অ্যাডমিনিস্ট্রেশন এন্ড সার্ভিসেস", techs: ["কম্পিউটার"] },
+                { date: "07/06/2026", day: "রবিবার", time: "12:00", code: "27172", name: "ফান্ডামেন্টাল অফ হাইড্রলিক এন্ড ইলেকট্রিক ভেহিকল", techs: ["পাওয়ার"] },
+                { date: "07/06/2026", day: "রবিবার", time: "12:00", code: "28674", name: "মেডিক্যাল ফিজিক্স এন্ড নিউক্লিয়ার ইনস্ট্রুমেন্ট", techs: ["ইলেকট্রোমেডিক্যাল"] },
+                { date: "08/06/2026", day: "সোমবার", time: "12:00", code: "26472", name: "স্যানেটারি ইঞ্জিনিয়ারিং", techs: ["সিভিল"] },
+                { date: "08/06/2026", day: "সোমবার", time: "12:00", code: "25861", name: "বিজনেস কমিউনিকেশন", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রনিক্স", "ইলেকট্রোমেডিক্যাল"] },
+                { date: "08/06/2026", day: "সোমবার", time: "12:00", code: "27073", name: "হিট ট্রিটমেন্ট অফ মেটাল", techs: ["মেকানিক্যাল", "পাওয়ার"] },
+                { date: "08/06/2026", day: "সোমবার", time: "12:00", code: "28272", name: "ইন্ডাস্ট্রিয়াল অটোমেশন সিস্টেম ডিজাইন", techs: ["মেকাট্রনিক্স"] },
+                { date: "08/06/2026", day: "সোমবার", time: "12:00", code: "28574", name: "আর্ক ডেভেলপমেন্ট প্রজেক্ট", techs: ["কম্পিউটার"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "12:00", code: "26473", name: "ট্রান্সপোর্টেশন ইঞ্জিনিয়ারিং-২", techs: ["সিভিল"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "12:00", code: "26773", name: "সুইচ গিয়ার এন্ড প্রোটেকশন", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রোমেডিক্যাল"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "12:00", code: "28271", name: "মেকাট্রনিক্স এন্ড পিএলসি", techs: ["মেকাট্রনিক্স"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "12:00", code: "26872", name: "ইন্ডাস্ট্রিয়াল অটোমেশন এন্ড পিএলসি", techs: ["ইলেকট্রিক্যাল"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "12:00", code: "28573", name: "সাওয়ার পাইপ ফিটিং এন্ড হাইড্রলিক্স", techs: ["কম্পিউটার"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "12:00", code: "27171", name: "স্যানিটরি স্টোর অপারেশন এন্ড এস্টিমেটিং", techs: ["পাওয়ার"] },
+                { date: "09/06/2026", day: "মঙ্গলবার", time: "12:00", code: "28273", name: "নেটওয়ার্ক এন্ড কমিউনিকেশন", techs: ["মেকাট্রনিক্স"] },
+                { date: "10/06/2026", day: "বুধবার", time: "12:00", code: "25851", name: "প্রিন্সিপল অফ মার্কেটিং", techs: ["সিভিল", "পাওয়ার"] },
+                { date: "10/06/2026", day: "বুধবার", time: "12:00", code: "26874", name: "অটোমেশন ইঞ্জিনিয়ারিং এন্ড পিএলসি", techs: ["ইলেকট্রিক্যাল"] },
+                { date: "10/06/2026", day: "বুধবার", time: "12:00", code: "26773", name: "কন্ট্রোল সিস্টেম এন্ড রোবোটিক্স", techs: ["ইলেকট্রনিক্স"] },
+                { date: "10/06/2026", day: "বুধবার", time: "12:00", code: "28571", name: "ডিজিটাল মার্কেটিং টেকনিক", techs: ["কম্পিউটার"] },
+                { date: "10/06/2026", day: "বুধবার", time: "12:00", code: "27072", name: "টুল ডিজাইন", techs: ["মেকানিক্যাল"] },
+                { date: "10/06/2026", day: "বুধবার", time: "12:00", code: "28672", name: "আইওটি এন্ড আরএফআইডি ইকুইপমেন্ট", techs: ["ইলেকট্রোমেডিক্যাল"] },
+                { date: "10/06/2026", day: "বুধবার", time: "12:00", code: "28274", name: "রোবোটিক্স ম্যানিপুলেটর এন্ড প্রসেস ইঞ্জিনিয়ারিং", techs: ["মেকাট্রনিক্স"] },
+                { date: "11/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "25853", name: "ইনোভেশন এন্ড এন্টারপ্রেনারশিপ", techs: ["সকল"] },
+                { date: "14/06/2026", day: "রবিবার", time: "12:00", code: "26474", name: "এস্টিমেটিং এন্ড কস্টিং-২", techs: ["সিভিল"] }
+            ]
+        };
+
+        const departments = {
+            "Civil": "সিভিল",
+            "Electrical": "ইলেকট্রিক্যাল",
+            "Electronics": "ইলেকট্রনিক্স",
+            "Mechanical": "মেকানিক্যাল",
+            "Power": "পাওয়ার",
+            "Computer": "কম্পিউটার",
+            "Electromedical": "ইলেকট্রোমেডিক্যাল",
+            "Mechatronics": "মেকাট্রনিক্স"
+        };
+
+        // --- DOM ELEMENTS ---
+        const semesterSelect = document.getElementById('semesterSelect');
+        const deptSelect = document.getElementById('deptSelect');
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('tableBody');
+        const noResults = document.getElementById('noResults');
+
+        // --- FUNCTIONS ---
+
+        function getUniqueDepartments(semesterData) {
+            const techSet = new Set();
+            semesterData.forEach(exam => {
+                exam.techs.forEach(tech => {
+                    if (tech !== "সকল") techSet.add(tech);
+                });
+            });
+            return Array.from(techSet).sort();
+        }
+
+        function populateDeptDropdown(semester) {
+            deptSelect.innerHTML = '<option value="all">সকল বিভাগ</option>';
+            deptSelect.disabled = false;
+            
+            if (routineData[semester]) {
+                const depts = getUniqueDepartments(routineData[semester]);
+                depts.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept;
+                    option.textContent = dept;
+                    deptSelect.appendChild(option);
+                });
+            }
+            searchInput.disabled = false;
+            renderTable();
+        }
+
+        function renderTable() {
+            const semester = semesterSelect.value;
+            const selectedDept = deptSelect.value;
+            const searchQuery = searchInput.value.toLowerCase();
+
+            tableBody.innerHTML = '';
+            
+            if (!semester) {
+                noResults.style.display = 'block';
+                noResults.textContent = "দয়া করে সেমিস্টার নির্বাচন করুন";
+                return;
+            }
+
+            const data = routineData[semester] || [];
+            
+            const filteredData = data.filter(exam => {
+                // Filter by Department
+                const matchesDept = selectedDept === 'all' || exam.techs.includes(selectedDept) || exam.techs.includes("সকল");
+                
+                // Filter by Search
+                const matchesSearch = exam.name.toLowerCase().includes(searchQuery) || 
+                                      exam.code.includes(searchQuery);
+
+                return matchesDept && matchesSearch;
+            });
+
+            if (filteredData.length === 0) {
+                noResults.style.display = 'block';
+                noResults.textContent = "কোনো তথ্য পাওয়া যায়নি।";
+            } else {
+                noResults.style.display = 'none';
+                filteredData.forEach(exam => {
+                    const row = document.createElement('tr');
+                    
+                    // Format Techs for display
+                    const techsHtml = exam.techs.map(t => `<span class="tech-tag">${t}</span>`).join('');
+
+                    row.innerHTML = `
+                        <td data-label="তারিখ ও বার" class="date-cell">${exam.date}<br><small>${exam.day}</small></td>
+                        <td data-label="সময়">${exam.time}</td>
+                        <td data-label="কোর্স কোড">${exam.code}</td>
+                        <td data-label="বিষয়ের নাম" class="subject-name">${exam.name}</td>
+                        <td data-label="প্রযোজ্য বিভাগসমূহ">${techsHtml}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+
+        semesterSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                populateDeptDropdown(e.target.value);
+            } else {
+                deptSelect.innerHTML = '<option value="">-- প্রথমে সেমিস্টার নির্বাচন করুন --</option>';
+                deptSelect.disabled = true;
+                searchInput.disabled = true;
+                tableBody.innerHTML = '';
+                noResults.style.display = 'none';
+            }
+        });
+
+        deptSelect.addEventListener('change', renderTable);
+        searchInput.addEventListener('input', renderTable);
+
+    </script>
+</body>
+</html>
