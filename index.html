@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPI Exam Routine Finder</title>
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>RPI Exam Routine Finder (Offline)</title>
     <style>
         :root {
             --primary-color: #1e3a8a; /* Deep Blue */
             --secondary-color: #3b82f6; /* Lighter Blue */
             --bg-color: #f0f4f8;
             --text-color: #1f2937;
-            --glass-bg: rgba(255, 255, 255, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.3);
-            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --glass-bg: rgba(255, 255, 255, 0.90);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
         }
 
         * {
@@ -23,41 +22,56 @@
         }
 
         body {
-            font-family: 'Hind Siliguri', sans-serif;
+            font-family: 'Noto Sans Bengali', 'Kalpurush', 'Arial', sans-serif;
             background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
             color: var(--text-color);
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
 
         /* Header */
         header {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
+            margin-bottom: 25px;
+            padding: 20px 15px;
             background: var(--primary-color);
             color: white;
             border-radius: 16px;
             box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            pointer-events: none;
         }
 
         header h1 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 700;
             margin-bottom: 5px;
+            position: relative;
         }
 
         header p {
-            font-size: 1rem;
+            font-size: 0.95rem;
             opacity: 0.9;
+            position: relative;
         }
 
         /* Controls Container */
         .controls {
             max-width: 1200px;
-            margin: 0 auto 30px auto;
+            margin: 0 auto 25px auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 15px;
             padding: 20px;
             background: var(--glass-bg);
@@ -82,11 +96,27 @@
         select, input {
             padding: 12px;
             border: 2px solid #e5e7eb;
-            border-radius: 8px;
+            border-radius: 10px;
             font-family: inherit;
             font-size: 1rem;
             transition: all 0.3s ease;
             background: white;
+            appearance: none; /* Removes default arrow */
+            -webkit-appearance: none;
+        }
+        
+        /* Custom Arrow for Select */
+        .input-group {
+            position: relative;
+        }
+        .input-group::after {
+            content: '▼';
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            position: absolute;
+            right: 15px;
+            top: 38px; /* Adjust based on label height */
+            pointer-events: none;
         }
 
         select:focus, input:focus {
@@ -112,21 +142,22 @@
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             font-family: inherit;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: background 0.3s;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .btn-print:hover {
-            background: #1e40af;
+        .btn-print:active {
+            transform: scale(0.98);
         }
 
-        /* Table Styles */
+        /* Table Styles (Desktop) */
         .table-wrapper {
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
@@ -139,7 +170,8 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px; /* Force scroll on small screens if not using cards */
+            /* Ensure table scrolls horizontally on very small screens if not card view */
+            display: table; 
         }
 
         thead {
@@ -151,13 +183,15 @@
             padding: 15px;
             text-align: left;
             border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
         }
 
         th {
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         tbody tr:hover {
@@ -167,47 +201,50 @@
         .date-cell {
             font-weight: 700;
             color: var(--primary-color);
+            white-space: nowrap;
         }
 
         .subject-name {
             font-weight: 600;
             color: #111827;
+            line-height: 1.4;
         }
 
         .tech-tag {
             display: inline-block;
-            background: #dbeafe;
+            background: #eff6ff;
             color: var(--primary-color);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
+            border: 1px solid #dbeafe;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
             margin-right: 5px;
             margin-bottom: 5px;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .no-results {
             text-align: center;
             padding: 40px;
             color: #6b7280;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
 
-        /* Mobile Card View */
-        @media (max-width: 768px) {
+        /* --- MOBILE RESPONSIVE CARD VIEW --- */
+        @media (max-width: 850px) {
             table, thead, tbody, th, td, tr {
                 display: block;
             }
 
             thead {
-                display: none;
+                display: none; /* Hide table headers */
             }
 
             tr {
-                margin-bottom: 15px;
+                margin-bottom: 20px;
                 background: white;
                 border-radius: 12px;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
                 border: 1px solid #e5e7eb;
                 overflow: hidden;
             }
@@ -215,78 +252,80 @@
             td {
                 border: none;
                 position: relative;
-                padding-left: 50%;
+                padding: 12px 15px 12px 45%; /* Left padding for label */
                 text-align: right;
                 border-bottom: 1px solid #f3f4f6;
+                font-size: 0.95rem;
             }
 
             td:last-child {
                 border-bottom: none;
             }
 
+            /* This creates the "Label" on the left side */
             td::before {
                 content: attr(data-label);
                 position: absolute;
                 left: 15px;
-                width: 45%;
+                top: 12px;
+                width: 40%;
                 padding-right: 10px;
                 white-space: nowrap;
                 text-align: left;
-                font-weight: 600;
+                font-weight: 700;
                 color: var(--primary-color);
+                font-size: 0.85rem;
+                text-transform: uppercase;
             }
 
+            /* Special styling for Date cell in card view */
             .date-cell {
-                background: #eff6ff;
-                padding: 10px 15px;
+                background: var(--primary-color);
+                color: white;
+                padding: 12px 15px;
                 text-align: center;
-                border-bottom: 2px solid #e5e7eb;
+                border-bottom: 1px solid var(--primary-color);
             }
             
             .date-cell::before {
-                display: none;
+                display: none; /* Hide label for the header cell */
+            }
+            
+            .date-cell small {
+                display: block;
+                font-weight: 400;
+                opacity: 0.9;
+                margin-top: 2px;
             }
 
+            /* Make subject name stand out */
             .subject-name {
                 display: block;
-                margin-bottom: 10px;
-                font-size: 1.1rem;
+                margin-bottom: 5px;
+                font-size: 1.05rem;
+            }
+            
+            /* Tech tags container */
+            td[data-label="প্রযোজ্য বিভাগসমূহ"] {
+                text-align: right;
+                padding-top: 15px;
+            }
+            
+            .tech-tag {
+                padding: 4px 10px;
+                font-size: 0.8rem;
             }
         }
 
         /* Print Styles */
         @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            .controls, .action-bar, header p {
-                display: none;
-            }
-            header {
-                background: white;
-                color: black;
-                box-shadow: none;
-                border-bottom: 2px solid black;
-                border-radius: 0;
-                margin-bottom: 10px;
-            }
-            .table-wrapper {
-                box-shadow: none;
-                border: none;
-            }
-            table {
-                min-width: 100%;
-                border: 1px solid black;
-            }
-            th, td {
-                border: 1px solid black;
-                color: black;
-            }
-            thead {
-                background: #f3f4f6;
-                color: black;
-            }
+            body { background: white; padding: 0; }
+            .controls, .action-bar, header p { display: none; }
+            header { background: white; color: black; box-shadow: none; border-radius: 0; border-bottom: 2px solid black; }
+            .table-wrapper { box-shadow: none; border: none; }
+            table { min-width: 100%; border: 1px solid black; }
+            th, td { border: 1px solid black; color: black; }
+            thead { background: #f3f4f6; color: black; }
         }
     </style>
 </head>
@@ -302,10 +341,10 @@
             <label for="semesterSelect">সেমিস্টার নির্বাচন করুন</label>
             <select id="semesterSelect">
                 <option value="">-- সেমিস্টার নির্বাচন --</option>
-                <option value="2">২য় পর্ব (2nd Semester)</option>
+                <option value="2">য় পর্ব (2nd Semester)</option>
                 <option value="3">৩য় পর্ব (3rd Semester)</option>
                 <option value="4">৪র্থ পর্ব (4th Semester)</option>
-                <option value="7">৭ম পর্ব (7th Semester)</option>
+                <option value="7">ম পর্ব (7th Semester)</option>
             </select>
         </div>
 
@@ -318,14 +357,14 @@
 
         <div class="input-group">
             <label for="searchInput">বিষয় খুঁজুন</label>
-            <input type="text" id="searchInput" placeholder="বিষয়ের নাম লিখুন..." disabled>
+            <input type="text" id="searchInput" placeholder="বিষয়ের নাম বা কোড লিখুন..." disabled>
         </div>
     </div>
 
     <div class="results-container">
         <div class="action-bar">
             <button class="btn-print" onclick="window.print()">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                 প্রিন্ট করুন
             </button>
         </div>
@@ -353,7 +392,6 @@
 
     <script>
         // --- DATA STRUCTURE ---
-        // Based on the images provided
         const routineData = {
             "2": [
                 { date: "04/06/2026", day: "বৃহস্পতিবার", time: "10:30", code: "25111", name: "গণিত-২", techs: ["সকল"] },
@@ -390,7 +428,7 @@
                 { date: "09/06/2026", day: "মঙ্গলবার", time: "09:00", code: "25122", name: "ফিজিক্স-২", techs: ["সিভিল", "ইলেকট্রিক্যাল", "কম্পিউটার", "পাওয়ার"] },
                 { date: "09/06/2026", day: "মঙ্গলবার", time: "09:00", code: "25113", name: "কেমিস্ট্রি", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রোমেডিক্যাল", "মেকানিক্যাল"] },
                 { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "25811", name: "সোশ্যাল সায়েন্স", techs: ["মেকানিক্যাল", "কম্পিউটার", "ইলেকট্রিক্যাল", "ইলেকট্রোমেডিক্যাল", "মেকাট্রনিক্স"] },
-                { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "26402", name: "সার্ভেয়িং-১", techs: ["সিভিল"] },
+                { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "26402", name: "সার্ভেয়িং-", techs: ["সিভিল"] },
                 { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "26703", name: "ইন্ডাস্ট্রিয়াল ইলেকট্রনিক্স", techs: ["ইলেকট্রিক্যাল"] },
                 { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "26803", name: "পাওয়ার ইলেকট্রনিক্স", techs: ["পাওয়ার"] },
                 { date: "10/06/2026", day: "বুধবার", time: "09:00", code: "27012", name: "মেশিন শপ প্র্যাকটিস-১", techs: ["মেকানিক্যাল"] },
@@ -442,7 +480,7 @@
             ],
             "7": [
                 { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "26474", name: "ডিজাইন অফ মেশিন এলিমেন্টস-২", techs: ["সিভিল"] },
-                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "26771", name: "এসি মেশিন-২", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রনিক্স"] },
+                { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "26771", name: "এসি মেশিন-", techs: ["ইলেকট্রিক্যাল", "ইলেকট্রনিক্স"] },
                 { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "27071", name: "ডিজাইন অফ মেশিন এলিমেন্টস", techs: ["মেকানিক্যাল", "পাওয়ার", "মেকাট্রনিক্স"] },
                 { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "28574", name: "মাল্টিমিডিয়া এন্ড অ্যানিমেশন", techs: ["কম্পিউটার"] },
                 { date: "04/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "28671", name: "ইলেকট্রোমেডিক্যাল ইকুইপমেন্ট", techs: ["ইলেকট্রোমেডিক্যাল"] },
@@ -475,17 +513,6 @@
                 { date: "11/06/2026", day: "বৃহস্পতিবার", time: "12:00", code: "25853", name: "ইনোভেশন এন্ড এন্টারপ্রেনারশিপ", techs: ["সকল"] },
                 { date: "14/06/2026", day: "রবিবার", time: "12:00", code: "26474", name: "এস্টিমেটিং এন্ড কস্টিং-২", techs: ["সিভিল"] }
             ]
-        };
-
-        const departments = {
-            "Civil": "সিভিল",
-            "Electrical": "ইলেকট্রিক্যাল",
-            "Electronics": "ইলেকট্রনিক্স",
-            "Mechanical": "মেকানিক্যাল",
-            "Power": "পাওয়ার",
-            "Computer": "কম্পিউটার",
-            "Electromedical": "ইলেকট্রোমেডিক্যাল",
-            "Mechatronics": "মেকাট্রনিক্স"
         };
 
         // --- DOM ELEMENTS ---
@@ -561,6 +588,7 @@
                     // Format Techs for display
                     const techsHtml = exam.techs.map(t => `<span class="tech-tag">${t}</span>`).join('');
 
+                    // NOTE: The 'data-label' attribute is crucial for the Mobile Card View to show headers
                     row.innerHTML = `
                         <td data-label="তারিখ ও বার" class="date-cell">${exam.date}<br><small>${exam.day}</small></td>
                         <td data-label="সময়">${exam.time}</td>
